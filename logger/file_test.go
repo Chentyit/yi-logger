@@ -1,13 +1,13 @@
 package logger
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestExists(t *testing.T) {
+	a := assert.New(t)
+
 	flag := isExists("../go.mod")
-	if !flag {
-		t.Fatal("文件不存在")
-	}
-	t.Log("文件存在")
+	a.Equal(flag, true, "文件不存在")
 }
