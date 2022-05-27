@@ -108,10 +108,10 @@ type yiLogger struct {
 
 var config *YiLogConfig
 
-// BuildConfig
+// ConfigBuildLink
 // @author Tianyi
-// @description 链式构建配置起始
-func BuildConfig() *YiLogConfig {
+// @description 链式构建日志配置
+func ConfigBuildLink() *YiLogConfig {
 	return &YiLogConfig{}
 }
 

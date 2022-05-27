@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-func TestBuildLoggerConfig(t *testing.T) {
+func TestConfigBuildLink(t *testing.T) {
 	ass := assert.New(t)
 
-	BuildConfig().SetDateFormat(LogDateFormat.ShortLine).SetTimeFormat(LogTimeFormat.Default).Build()
+	ConfigBuildLink().SetDateFormat(LogDateFormat.ShortLine).SetTimeFormat(LogTimeFormat.Default).Build()
 
 	df := config.dateFormat
 	fmt.Println(df)
