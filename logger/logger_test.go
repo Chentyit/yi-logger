@@ -11,8 +11,8 @@ func TestBuildLoggerConfig(t *testing.T) {
 
 	BuildConfig().SetDateFormat(LogDateFormat.ShortLine).SetTimeFormat(LogTimeFormat.Default).Build()
 
-	df := Config.dateFormat
+	df := config.dateFormat
 	fmt.Println(df)
-	fmt.Println(Config)
+	fmt.Println(config)
 	ass.EqualValues(df, "yyyy-MM-dd", "日期格式错误")
 }

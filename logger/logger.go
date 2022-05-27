@@ -102,7 +102,7 @@ type yiLogger struct {
 	date time.Time   // 日期，用于判断是否需要换文件
 }
 
-var Config *YiLogConfig
+var config *YiLogConfig
 
 // BuildConfig
 // @author Tianyi
