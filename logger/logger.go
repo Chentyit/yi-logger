@@ -115,6 +115,38 @@ func ConfigBuildLink() *YiLogConfig {
 	return &YiLogConfig{}
 }
 
+// ConfigBuild
+// @author Tianyi
+// @description 时间传参进行配置
+func ConfigBuild(cfg *YiLogConfig) {
+	// 添加默认值
+	if cfg.maxSize == 0 {
+		cfg.maxSize = 10
+	}
+
+	if cfg.maxBackups == 0 {
+		cfg.maxBackups = 5
+	}
+
+	if cfg.maxAge == 0 {
+		cfg.maxAge = 7
+	}
+
+	if len(cfg.dateFormat) == 0 {
+		cfg.dateFormat = "yyyy/MM/dd"
+	}
+
+	if len(cfg.timeFormat) == 0 {
+		cfg.timeFormat = "hh:HH:ss"
+	}
+
+	if len(cfg.file) == 0 {
+		cfg.file = "./"
+	}
+
+	config = cfg
+}
+
 // SetShowMs
 // @author Tianyi
 // @description 设置是否显示毫秒
