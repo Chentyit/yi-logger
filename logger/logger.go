@@ -59,12 +59,15 @@ var LogTimeFormat = struct {
 	"hh:HH:ss",
 }
 
+// OutPutWay 输出方式
+type OutPutWay int
+
 // OutPut 日志输出方式
 var OutPut = struct {
-	File    int
-	Console int
-	Default int
-}{1, 2, 1}
+	File    OutPutWay
+	Console OutPutWay
+	Default OutPutWay
+}{0, 1, 0}
 
 // YiLogConfig
 // @author Tianyi
@@ -75,6 +78,7 @@ type YiLogConfig struct {
 	maxSize    int        // 每个日志最大容量 (默认: 10，单位: MB)
 	maxBackups int        // 最多保存记录个数 (默认：5)
 	maxAge     int        // 做多保存天数	(默认: 7)
+	outputWay  OutPutWay  // 输出方式 (默认: 0 -> 输出到控制台)
 	dateFormat DateFormat // 日期格式 (默认: yyyy/MM/dd)
 	timeFormat TimeFormat // 时间格式 (默认: hh:HH:ss)
 	file       string     // 日志保存文件 (默认: ./当前目录)
@@ -183,6 +187,14 @@ func (cfg *YiLogConfig) SetPrefix(prefix string) *YiLogConfig {
 	return cfg
 }
 
+// SetOutput
+// @author Tianyi
+// @description 设置输出方式
+func (cfg *YiLogConfig) SetOutput(outputWay OutPutWay) *YiLogConfig {
+	cfg.outputWay = outputWay
+	return cfg
+}
+
 // Build
 // @author Tianyi
 // @description
@@ -212,5 +224,5 @@ func (cfg *YiLogConfig) Build() {
 		cfg.file = "./"
 	}
 
-	Config = cfg
+	config = cfg
 }
