@@ -100,25 +100,24 @@ type yiLogEntry struct {
 // @author Tianyi
 // @description 通过 yiLogger 进行操作（写，读，创建文件等）
 type yiLogger struct {
-	mu   *sync.Mutex // 同步锁
-	size int         // 记录当期日志文件大小
-	file *os.File    // 文件 IO
-	date time.Time   // 日期，用于判断是否需要换文件
+	mu   *sync.Mutex  // 同步锁
+	size int          // 记录当期日志文件大小
+	file *os.File     // 文件 IO
+	date time.Time    // 日期，用于判断是否需要换文件
+	cfg  *YiLogConfig // logger config
 }
 
-var config *YiLogConfig
-
-// ConfigBuildLink
+// BuildLoggerLink
 // @author Tianyi
 // @description 链式构建日志配置
-func ConfigBuildLink() *YiLogConfig {
+func BuildLoggerLink() *YiLogConfig {
 	return &YiLogConfig{}
 }
 
-// ConfigBuild
+// BuildLogger
 // @author Tianyi
 // @description 时间传参进行配置
-func ConfigBuild(cfg *YiLogConfig) {
+func BuildLogger(cfg *YiLogConfig) *yiLogger {
 	// 添加默认值
 	if cfg.maxSize == 0 {
 		cfg.maxSize = 10
@@ -140,11 +139,29 @@ func ConfigBuild(cfg *YiLogConfig) {
 		cfg.timeFormat = "hh:HH:ss"
 	}
 
-	if len(cfg.file) == 0 {
-		cfg.file = "./"
+	var logger *yiLogger
+
+	if cfg.outputWay == 0 {
+		logger = &yiLogger{
+			size: 0,
+			file: nil,
+			date: time.Now(),
+			cfg:  cfg,
+		}
+	} else {
+		f, err := os.OpenFile(cfg.file, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			panic("file path not found: " + cfg.file)
+		}
+		logger = &yiLogger{
+			size: 0,
+			file: f,
+			date: time.Now(),
+			cfg:  cfg,
+		}
 	}
 
-	config = cfg
+	return logger
 }
 
 // SetShowMs
@@ -230,7 +247,7 @@ func (cfg *YiLogConfig) SetOutput(outputWay OutPutWay) *YiLogConfig {
 // Build
 // @author Tianyi
 // @description
-func (cfg *YiLogConfig) Build() {
+func (cfg *YiLogConfig) Build() *yiLogger {
 	// 配置默认值
 	if cfg.maxSize == 0 {
 		cfg.maxSize = 10
@@ -252,9 +269,27 @@ func (cfg *YiLogConfig) Build() {
 		cfg.timeFormat = "hh:HH:ss"
 	}
 
-	if len(cfg.file) == 0 {
-		cfg.file = "./"
+	var logger *yiLogger
+
+	if cfg.outputWay == 0 {
+		logger = &yiLogger{
+			size: 0,
+			file: nil,
+			date: time.Now(),
+			cfg:  cfg,
+		}
+	} else {
+		f, err := os.OpenFile(cfg.file, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			panic("file path not found: " + cfg.file)
+		}
+		logger = &yiLogger{
+			size: 0,
+			file: f,
+			date: time.Now(),
+			cfg:  cfg,
+		}
 	}
 
-	config = cfg
+	return logger
 }

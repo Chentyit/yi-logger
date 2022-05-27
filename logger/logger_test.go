@@ -9,11 +9,11 @@ import (
 func TestConfigBuildLink(t *testing.T) {
 	ass := assert.New(t)
 
-	ConfigBuildLink().SetDateFormat(LogDateFormat.ShortLine).SetTimeFormat(LogTimeFormat.Default).Build()
+	logger := BuildLoggerLink().SetDateFormat(LogDateFormat.ShortLine).SetTimeFormat(LogTimeFormat.Default).Build()
 
-	df := config.dateFormat
+	df := logger.cfg.dateFormat
 	fmt.Println(df)
-	fmt.Println(config)
+	fmt.Println(logger.cfg)
 	ass.EqualValues(df, "yyyy-MM-dd", "日期格式错误")
 }
 
@@ -25,10 +25,10 @@ func TestConfigBuild(t *testing.T) {
 		timeFormat: LogTimeFormat.Default,
 	}
 
-	ConfigBuild(cfg)
+	logger := BuildLogger(cfg)
 
-	df := config.dateFormat
+	df := logger.cfg.dateFormat
 	fmt.Println(df)
-	fmt.Println(config)
+	fmt.Println(logger.cfg)
 	ass.EqualValues(df, "yyyy-MM-dd", "日期格式错误")
 }
