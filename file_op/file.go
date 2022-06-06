@@ -22,11 +22,14 @@ func CreateFileOp(path string) *FileOp {
 // @description 用于进行文件操作前的准备工作
 func (fo *FileOp) Ready() (err error) {
 	if fo.file == nil {
-		fo.file, err = CreateFile(fo.path)
-		if err != nil {
-			return err
+		if IsExists(fo.path) {
+			fo.file, err = MustOpenFile(fo.path)
+		} else {
+			fo.file, err = CreateFile(fo.path)
+			if err != nil {
+				return err
+			}
 		}
-		return nil
 	}
 	return nil
 }
@@ -79,4 +82,12 @@ func CreateFile(path string) (*os.File, error) {
 	}
 
 	return file, nil
+}
+
+// MustOpenFile
+// @author Tianyi
+// @description 直接打开文件，使用该方法的前提是确定文件一定存在
+func MustOpenFile(path string) (*os.File, error) {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_RDWR, 0666)
+	return file, err
 }
