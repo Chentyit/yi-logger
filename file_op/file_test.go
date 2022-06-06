@@ -32,3 +32,21 @@ func TestCreateFile(t *testing.T) {
 	_, err := CreateFile("../tt.txt")
 	a.Equal(err, nil, err)
 }
+
+func TestCreateFileOp(t *testing.T) {
+	a := assert.New(t)
+
+	fileOp := CreateFileOp("../test.txt")
+	a.EqualValues(fileOp.path, "../test.txt", "FileOp 对象创建失败")
+}
+
+func TestFileOpWrite(t *testing.T) {
+	a := assert.New(t)
+
+	fileOp := CreateFileOp("../test.txt")
+	err := fileOp.Ready()
+	a.Equal(err, nil, err)
+	_ = fileOp.Write([]byte("hello world"))
+	_ = fileOp.Close()
+	_ = fileOp.Write([]byte("hello world2"))
+}

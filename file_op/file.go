@@ -40,6 +40,11 @@ func (fo *FileOp) Write(buf []byte) error {
 	return err
 }
 
+func (fo *FileOp) Close() error {
+	err := fo.file.Close()
+	return err
+}
+
 // IsExists
 // @author Tianyi
 // @description 判断路径是否存在
