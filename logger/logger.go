@@ -1,9 +1,9 @@
 package logger
 
 import (
-	"os"
 	"sync"
 	"time"
+	"yi-go-logger/file_op"
 )
 
 // Level 日志等级
@@ -100,11 +100,11 @@ type yiLogEntry struct {
 // @author Tianyi
 // @description 通过 yiLogger 进行操作（写，读，创建文件等）
 type yiLogger struct {
-	mu   *sync.Mutex  // 同步锁
-	size int          // 记录当期日志文件大小
-	file *os.File     // 文件 IO
-	date time.Time    // 日期，用于判断是否需要换文件
-	cfg  *YiLogConfig // logger config
+	mu   *sync.Mutex     // 同步锁
+	size int             // 记录当期日志文件大小
+	fo   *file_op.FileOp // 文件 IO
+	date time.Time       // 日期，用于判断是否需要换文件
+	cfg  *YiLogConfig    // logger config
 }
 
 // BuildLoggerLink
@@ -144,18 +144,15 @@ func BuildLogger(cfg *YiLogConfig) *yiLogger {
 	if cfg.outputWay == 0 {
 		logger = &yiLogger{
 			size: 0,
-			file: nil,
+			fo:   nil,
 			date: time.Now(),
 			cfg:  cfg,
 		}
 	} else {
-		f, err := os.OpenFile(cfg.file, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-		if err != nil {
-			panic("file path not found: " + cfg.file)
-		}
+		fo := file_op.CreateFileOp(cfg.file)
 		logger = &yiLogger{
 			size: 0,
-			file: f,
+			fo:   fo,
 			date: time.Now(),
 			cfg:  cfg,
 		}
@@ -274,18 +271,15 @@ func (cfg *YiLogConfig) Build() *yiLogger {
 	if cfg.outputWay == 0 {
 		logger = &yiLogger{
 			size: 0,
-			file: nil,
+			fo:   nil,
 			date: time.Now(),
 			cfg:  cfg,
 		}
 	} else {
-		f, err := os.OpenFile(cfg.file, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-		if err != nil {
-			panic("file path not found: " + cfg.file)
-		}
+		fo := file_op.CreateFileOp(cfg.file)
 		logger = &yiLogger{
 			size: 0,
-			file: f,
+			fo:   fo,
 			date: time.Now(),
 			cfg:  cfg,
 		}
