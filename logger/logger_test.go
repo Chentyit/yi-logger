@@ -32,3 +32,25 @@ func TestConfigBuild(t *testing.T) {
 	fmt.Println(logger.cfg)
 	ass.EqualValues(df, "yyyy-MM-dd", "日期格式错误")
 }
+
+func TestBuildLogEntry(t *testing.T) {
+
+	cfg := &YiLogConfig{
+		dateFormat: LogDateFormat.Compact,
+		timeFormat: LogTimeFormat.Compact,
+	}
+
+	entry := buildLogEntry(cfg, LogLevel.InfoLevel, "test")
+
+	fmt.Println(entry.DateTime)
+}
+
+func TestInfo2Console(t *testing.T) {
+	cfg := &YiLogConfig{
+		dateFormat: LogDateFormat.Default,
+		timeFormat: LogTimeFormat.Default,
+	}
+
+	logger := BuildLogger(cfg)
+	logger.Info("logger\ntest")
+}
