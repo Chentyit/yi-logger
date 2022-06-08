@@ -247,6 +247,10 @@ func buildLogger(cfg *YiLogConfig) *yiLogger {
 		cfg.timeFormat = "hh:HH:ss"
 	}
 
+	if cfg.outputWay == OutPut.File && len(cfg.file) == 0 {
+		cfg.file = "./"
+	}
+
 	if cfg.outputWay == OutPut.Default {
 		return &yiLogger{
 			fo:   nil,
@@ -254,7 +258,7 @@ func buildLogger(cfg *YiLogConfig) *yiLogger {
 			cfg:  cfg,
 		}
 	} else {
-		fo := file_op.CreateFileOp(cfg.file)
+		fo := file_op.CreateFileOp(cfg.file, cfg.maxSize, cfg.maxAge, cfg.maxBackups)
 		return &yiLogger{
 			fo:   fo,
 			date: time.Now(),
