@@ -3,6 +3,7 @@ package logger
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"sync"
@@ -262,6 +263,26 @@ func buildLogger(cfg *YiLogConfig) *yiLogger {
 	}
 }
 
+func (logger *yiLogger) Trace(format string, a ...any) {
+	if LogLevel.TraceLevel <= logger.cfg.logLevel {
+		return
+	}
+
+	log := createLog(logger.cfg, LogLevel.TraceLevel, format, a...)
+
+	logger.output(log)
+}
+
+func (logger *yiLogger) Debug(format string, a ...any) {
+	if LogLevel.DebugLevel <= logger.cfg.logLevel {
+		return
+	}
+
+	log := createLog(logger.cfg, LogLevel.DebugLevel, format, a...)
+
+	logger.output(log)
+}
+
 func (logger *yiLogger) Info(format string, a ...any) {
 	// 如果 Log 配置的等级大于当前等级，则输入当前等级日志
 	if LogLevel.InfoLevel <= logger.cfg.logLevel {
@@ -271,6 +292,41 @@ func (logger *yiLogger) Info(format string, a ...any) {
 	log := createLog(logger.cfg, LogLevel.InfoLevel, format, a...)
 
 	logger.output(log)
+}
+
+func (logger *yiLogger) Warn(format string, a ...any) {
+	if LogLevel.WarnLevel <= logger.cfg.logLevel {
+		return
+	}
+
+	log := createLog(logger.cfg, LogLevel.WarnLevel, format, a...)
+
+	logger.output(log)
+}
+
+func (logger *yiLogger) Error(format string, a ...any) {
+	if LogLevel.ErrorLevel <= logger.cfg.logLevel {
+		return
+	}
+
+	log := createLog(logger.cfg, LogLevel.ErrorLevel, format, a...)
+
+	logger.output(log)
+}
+
+// Panic
+// @author Tianyi
+// @description 该日志级别会直接让整个程序退出，慎用
+func (logger *yiLogger) Panic(format string, a ...any) {
+	if LogLevel.PanicLevel <= logger.cfg.logLevel {
+		return
+	}
+
+	log := createLog(logger.cfg, LogLevel.PanicLevel, format, a...)
+
+	logger.output(log)
+
+	os.Exit(1)
 }
 
 // createLog
