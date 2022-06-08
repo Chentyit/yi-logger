@@ -8,22 +8,24 @@ import (
 )
 
 type FileOp struct {
-	file    *os.File
-	isOpen  bool // 用于判断是否可以进行操作
-	maxSize int  // 以 MB 为单位
-	curSize int
-	maxAge  int // 以天为单位
-	curDate time.Time
-	path    string
+	file       *os.File
+	isOpen     bool // 用于判断是否可以进行操作
+	maxSize    int  // 以 MB 为单位
+	curSize    int
+	maxAge     int // 以天为单位
+	maxBackups int
+	curDate    time.Time
+	path       string
 }
 
-func CreateFileOp(path string, maxSize int, maxAge int) *FileOp {
+func CreateFileOp(path string, maxSize int, maxAge int, maxBackups int) *FileOp {
 	return &FileOp{
-		path:    path,
-		isOpen:  false,
-		curSize: 0,
-		maxSize: maxSize,
-		maxAge:  maxAge,
+		path:       path,
+		isOpen:     false,
+		curSize:    0,
+		maxSize:    maxSize,
+		maxAge:     maxAge,
+		maxBackups: maxBackups,
 	}
 }
 
