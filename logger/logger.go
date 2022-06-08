@@ -64,7 +64,7 @@ var LogTimeFormat = struct {
 }
 
 // OutPutWay 输出方式
-type OutPutWay int
+type OutPutWay byte
 
 // OutPut 日志输出方式
 var OutPut = struct {
