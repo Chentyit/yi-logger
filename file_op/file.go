@@ -1,9 +1,13 @@
 package file_op
 
 import (
+	"archive/zip"
 	"errors"
+	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -73,23 +77,6 @@ func (fo *FileOp) Close() error {
 	return err
 }
 
-// Package
-// @author Tianyi
-// @description 将文件打包，触发打包有以下几种情况：
-// 				1. 手动触发，会将当前 fo.file 打包
-// 				2. 没跨天，但是超过了 maxSize 会打包
-//				3. 跨天打包
-func (fo *FileOp) Package() {
-	// TODO
-}
-
-// NewFile
-// @author Tianyi
-// @description 在切换文件时调用该方法
-func (fo *FileOp) NewFile() {
-	// TODO
-}
-
 // IsExists
 // @author Tianyi
 // @description 判断路径是否存在
@@ -140,4 +127,89 @@ func CreateFile(path string) (*os.File, error) {
 func MustOpenFile(path string) (*os.File, error) {
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_RDWR, 0666)
 	return file, err
+}
+
+// Compress
+// @author Tianyi
+// @param filePath 需要压缩文件或者目录的路径
+// @param dest 压缩目标文件
+// @description 将文件压缩，触发压缩有以下几种情况：
+// 				1. 手动触发，会将当前 fo.file 打包
+// 				2. 没跨天，但是超过了 maxSize 会打包
+//				3. 跨天打包
+func Compress(pkgPath string, paths ...string) error {
+	// 获取上级目录路径
+	preDir := filepath.Dir(pkgPath)
+	if err := os.MkdirAll(preDir, os.ModePerm); err != nil {
+		return err
+	}
+
+	// 创建压缩文件
+	archive, err := os.Create(pkgPath)
+	if err != nil {
+		return err
+	}
+	defer func(archive *os.File) {
+		_ = archive.Close()
+	}(archive)
+
+	// 创建 zip writer
+	zipWriter := zip.NewWriter(archive)
+	defer func(zipWriter *zip.Writer) {
+		_ = zipWriter.Close()
+	}(zipWriter)
+
+	// 遍历需要打包的路径
+	for _, srcPath := range paths {
+		// 删除最后一个 '/'
+		srcPath = strings.TrimSuffix(srcPath, string(os.PathSeparator))
+
+		// 开始检查文件树
+		err = filepath.Walk(
+			srcPath,
+			func(path string, info fs.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+
+				header, err := zip.FileInfoHeader(info)
+				if err != nil {
+					return err
+				}
+
+				// 设置压缩方式
+				header.Method = zip.Deflate
+
+				// 将文件的相对路径设置为头名称
+				header.Name, err = filepath.Rel(filepath.Dir(srcPath), path)
+				if err != nil {
+					return err
+				}
+				if info.IsDir() {
+					header.Name += string(os.PathSeparator)
+				}
+
+				// 创建文件头写入器并保存文件内容
+				headerWriter, err := zipWriter.CreateHeader(header)
+				if err != nil {
+					return err
+				}
+				if info.IsDir() {
+					return nil
+				}
+				f, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				defer func(f *os.File) {
+					_ = f.Close()
+				}(f)
+				_, err = io.Copy(headerWriter, f)
+				return err
+			})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
