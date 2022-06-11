@@ -1,36 +1,31 @@
 package file_op
 
 import (
-	"archive/zip"
-	"errors"
-	"io"
-	"io/fs"
 	"os"
-	"path"
-	"path/filepath"
-	"strings"
 	"time"
 )
 
 type FileOp struct {
-	file       *os.File
-	isOpen     bool // 用于判断是否可以进行操作
-	maxSize    int  // 以 MB 为单位
-	curSize    int
-	maxAge     int // 以天为单位
-	maxBackups int
-	curDate    time.Time
-	path       string
+	file         *os.File
+	isOpen       bool // 用于判断是否可以进行操作
+	needCompress bool // 是否需要压缩
+	maxSize      int  // 以 MB 为单位
+	curSize      int
+	maxAge       int // 以天为单位
+	maxBackups   int
+	curDate      time.Time
+	path         string
 }
 
-func CreateFileOp(path string, maxSize int, maxAge int, maxBackups int) *FileOp {
+func CreateFileOp(path string, maxSize int, maxAge int, maxBackups int, needCompress bool) *FileOp {
 	return &FileOp{
-		path:       path,
-		isOpen:     false,
-		curSize:    0,
-		maxSize:    maxSize,
-		maxAge:     maxAge,
-		maxBackups: maxBackups,
+		path:         path,
+		needCompress: needCompress,
+		isOpen:       false,
+		curSize:      0,
+		maxSize:      maxSize,
+		maxAge:       maxAge,
+		maxBackups:   maxBackups,
 	}
 }
 
