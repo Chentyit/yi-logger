@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -212,4 +213,61 @@ func Compress(pkgPath string, paths ...string) error {
 		}
 	}
 	return nil
+}
+
+// Decompress
+// @author Tianyi
+// @param srcPath 压缩包路径
+// @param dstPath 解压路径
+// @description
+func Decompress(srcPath, dstPath string) error {
+	reader, err := zip.OpenReader(srcPath)
+	if err != nil {
+		return err
+	}
+	defer func(reader *zip.ReadCloser) {
+		_ = reader.Close()
+	}(reader)
+	for _, file := range reader.File {
+		if err := decompress(file, dstPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func decompress(file *zip.File, dstPath string) error {
+	// create the directory of file
+	filePath := path.Join(dstPath, file.Name)
+	if file.FileInfo().IsDir() {
+		if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
+		return err
+	}
+
+	// open the file
+	r, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer func(r io.ReadCloser) {
+		_ = r.Close()
+	}(r)
+
+	// create the file
+	w, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer func(w *os.File) {
+		_ = w.Close()
+	}(w)
+
+	// save the decompressed file content
+	_, err = io.Copy(w, r)
+	return err
 }

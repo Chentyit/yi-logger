@@ -54,3 +54,7 @@ func TestFileOpWrite(t *testing.T) {
 func TestCompress(t *testing.T) {
 	_ = Compress("../test.zip", "../logger", "../test_big_file.txt")
 }
+
+func TestDecompress(t *testing.T) {
+	_ = Decompress("../test.zip", "../zip")
+}
