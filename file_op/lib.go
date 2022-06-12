@@ -61,10 +61,7 @@ func MustOpenFile(path string) (*os.File, error) {
 // Compress
 // @param filePath 需要压缩文件或者目录的路径
 // @param dest 压缩目标文件
-// @description 将文件压缩，触发压缩有以下几种情况：
-// 				1. 手动触发，会将当前 fo.file 打包
-// 				2. 没跨天，但是超过了 maxSize 会打包
-//				3. 跨天打包
+// @description 压缩文件
 func Compress(pkgPath string, paths ...string) error {
 	// 获取上级目录路径
 	preDir := filepath.Dir(pkgPath)
