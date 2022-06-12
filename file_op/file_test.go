@@ -58,3 +58,23 @@ func TestCompress(t *testing.T) {
 func TestDecompress(t *testing.T) {
 	_ = Decompress("../test.zip", "../zip")
 }
+
+func TestChangeFileName(t *testing.T) {
+	_, _ = ChangeFileName("../test_big_file.txt", "test-2022-06-12")
+}
+
+func TestFileWriteOverSize(t *testing.T) {
+	a := assert.New(t)
+
+	fileOp := CreateFileOp("../test_big_file.txt", 10, true)
+
+	err := fileOp.Write([]byte("hello world"))
+	a.Equal(err, nil, err)
+}
+
+func TestBuildBigFile(t *testing.T) {
+	fileOp := CreateFileOp("../test_big_file.txt", 20, false)
+	for {
+		_ = fileOp.Write([]byte("hello world"))
+	}
+}
