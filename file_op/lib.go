@@ -12,7 +12,6 @@ import (
 )
 
 // IsExists
-// @author Tianyi
 // @description 判断路径是否存在
 func IsExists(path string) bool {
 	_, err := os.Stat(path)
@@ -20,7 +19,6 @@ func IsExists(path string) bool {
 }
 
 // IsPermission
-// @author Tianyi
 // description 判断文件是否有权限操作
 func IsPermission(path string) bool {
 	_, err := os.Stat(path)
@@ -28,7 +26,6 @@ func IsPermission(path string) bool {
 }
 
 // Mkdir
-// @author Tianyi
 // @description 创建一个目录
 func Mkdir(path string) error {
 	err := os.MkdirAll(path, os.ModePerm)
@@ -39,7 +36,6 @@ func Mkdir(path string) error {
 }
 
 // CreateFile
-// @author Tianyi
 // @description 创建文件，先检查文件是否存在，存在就报错，不存在就创建
 func CreateFile(path string) (*os.File, error) {
 	exist := IsExists(path)
@@ -56,7 +52,6 @@ func CreateFile(path string) (*os.File, error) {
 }
 
 // MustOpenFile
-// @author Tianyi
 // @description 直接打开文件，使用该方法的前提是确定文件一定存在
 func MustOpenFile(path string) (*os.File, error) {
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_RDWR, 0666)
@@ -64,7 +59,6 @@ func MustOpenFile(path string) (*os.File, error) {
 }
 
 // Compress
-// @author Tianyi
 // @param filePath 需要压缩文件或者目录的路径
 // @param dest 压缩目标文件
 // @description 将文件压缩，触发压缩有以下几种情况：
@@ -149,10 +143,8 @@ func Compress(pkgPath string, paths ...string) error {
 }
 
 // Decompress
-// @author Tianyi
 // @param srcPath 压缩包路径
 // @param dstPath 解压路径
-// @description
 func Decompress(srcPath, dstPath string) error {
 	reader, err := zip.OpenReader(srcPath)
 	if err != nil {
