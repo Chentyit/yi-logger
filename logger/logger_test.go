@@ -54,3 +54,22 @@ func TestInfo2Console(t *testing.T) {
 	logger := BuildLogger(cfg)
 	logger.Info("logger\ntest")
 }
+
+func TestWriteBigLog(t *testing.T) {
+	cfg := &YiLogConfig{
+		compress:   true,
+		outputWay:  OutPut.File,
+		file:       "../test.log",
+		maxSize:    20,
+		dateFormat: LogDateFormat.Compact,
+		timeFormat: LogTimeFormat.Compact,
+	}
+	logger := BuildLogger(cfg)
+	for true {
+		logger.Info("info message")
+		logger.Trace("trace message")
+		logger.Error("error message")
+		logger.Debug("debug message")
+		logger.Warn("warn message")
+	}
+}

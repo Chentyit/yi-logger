@@ -72,13 +72,13 @@ var OutPut = struct {
 	File    OutPutWay
 	Console OutPutWay
 	Default OutPutWay
-}{0, 1, 0}
+}{0, 1, 1}
 
 // YiLogConfig
 // @author Tianyi
 // @description 日志基础配置
 type YiLogConfig struct {
-	showMs     bool       // 是否显示毫秒 (默认: false，不显示毫秒)
+	compress   bool       // 是否需要压缩日志文件
 	logLevel   Level      // 日志等级 (默认: TraceLevel -> 0 打印所有类型日志)
 	maxSize    int        // 每个日志最大容量 (默认: 10，单位: MB)
 	maxBackups int        // 最多保存记录个数 (默认：5)
@@ -124,11 +124,11 @@ func BuildLoggerLink() *YiLogConfig {
 	return &YiLogConfig{}
 }
 
-// SetShowMs
+// SetCompress
 // @author Tianyi
-// @description 设置是否显示毫秒
-func (cfg *YiLogConfig) SetShowMs(show bool) *YiLogConfig {
-	cfg.showMs = show
+// @description 设置需要压缩日志文件
+func (cfg *YiLogConfig) SetCompress(compress bool) *YiLogConfig {
+	cfg.compress = compress
 	return cfg
 }
 
@@ -258,7 +258,7 @@ func buildLogger(cfg *YiLogConfig) *yiLogger {
 			cfg:  cfg,
 		}
 	} else {
-		fo := file_op.CreateFileOp(cfg.file, cfg.maxSize, cfg.maxAge, cfg.maxBackups)
+		fo := file_op.CreateFileOp(cfg.file, cfg.maxSize, cfg.compress)
 		return &yiLogger{
 			fo:   fo,
 			date: time.Now(),
