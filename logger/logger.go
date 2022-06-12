@@ -3,12 +3,12 @@ package logger
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Chentyit/yi-logger/file_op"
 	"os"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-	"yi-go-logger/file_op"
 )
 
 // Level 日志等级
@@ -69,24 +69,24 @@ type OutPutWay byte
 
 // OutPut 日志输出方式
 var OutPut = struct {
-	File    OutPutWay
 	Console OutPutWay
+	File    OutPutWay
 	Default OutPutWay
-}{0, 1, 1}
+}{0, 1, 0}
 
 // YiLogConfig
 // @author Tianyi
 // @description 日志基础配置
 type YiLogConfig struct {
-	compress   bool       // 是否需要压缩日志文件
-	logLevel   Level      // 日志等级 (默认: TraceLevel -> 0 打印所有类型日志)
-	maxSize    int        // 每个日志最大容量 (默认: 10，单位: MB)
-	maxBackups int        // 最多保存记录个数 (默认：5)
-	maxAge     int        // 做多保存天数	(默认: 7)
-	outputWay  OutPutWay  // 输出方式 (默认: 0 -> 输出到控制台)
-	dateFormat DateFormat // 日期格式 (默认: yyyy-MM-dd)
-	timeFormat TimeFormat // 时间格式 (默认: hh:HH:ss)
-	file       string     // 日志保存文件 (默认: ./当前目录)
+	Compress   bool       // 是否需要压缩日志文件
+	LogLevel   Level      // 日志等级 (默认: TraceLevel -> 0 打印所有类型日志)
+	MaxSize    int        // 每个日志最大容量 (默认: 10，单位: MB)
+	MaxBackups int        // 最多保存记录个数 (默认：5)
+	MaxAge     int        // 做多保存天数	(默认: 7)
+	OutputWay  OutPutWay  // 输出方式 (默认: 0 -> 输出到控制台)
+	DateFormat DateFormat // 日期格式 (默认: yyyy-MM-dd)
+	TimeFormat TimeFormat // 时间格式 (默认: hh:HH:ss)
+	File       string     // 日志保存文件 (默认: ./当前目录)
 }
 
 // yiLogEntry
@@ -128,7 +128,7 @@ func BuildLoggerLink() *YiLogConfig {
 // @author Tianyi
 // @description 设置需要压缩日志文件
 func (cfg *YiLogConfig) SetCompress(compress bool) *YiLogConfig {
-	cfg.compress = compress
+	cfg.Compress = compress
 	return cfg
 }
 
@@ -136,7 +136,7 @@ func (cfg *YiLogConfig) SetCompress(compress bool) *YiLogConfig {
 // @author Tianyi
 // @description 设置日期格式
 func (cfg *YiLogConfig) SetDateFormat(df DateFormat) *YiLogConfig {
-	cfg.dateFormat = df
+	cfg.DateFormat = df
 	return cfg
 }
 
@@ -144,7 +144,7 @@ func (cfg *YiLogConfig) SetDateFormat(df DateFormat) *YiLogConfig {
 // @author Tianyi
 // @description 设置时间格式
 func (cfg *YiLogConfig) SetTimeFormat(tf TimeFormat) *YiLogConfig {
-	cfg.timeFormat = tf
+	cfg.TimeFormat = tf
 	return cfg
 }
 
@@ -152,7 +152,7 @@ func (cfg *YiLogConfig) SetTimeFormat(tf TimeFormat) *YiLogConfig {
 // @author Tianyi
 // @description 设置日志等级
 func (cfg *YiLogConfig) SetLevel(level Level) *YiLogConfig {
-	cfg.logLevel = level
+	cfg.LogLevel = level
 	return cfg
 }
 
@@ -160,7 +160,7 @@ func (cfg *YiLogConfig) SetLevel(level Level) *YiLogConfig {
 // @author Tianyi
 // @description 设置最大容量
 func (cfg *YiLogConfig) SetMaxSize(maxSize int) *YiLogConfig {
-	cfg.maxSize = maxSize
+	cfg.MaxSize = maxSize
 	return cfg
 }
 
@@ -168,7 +168,7 @@ func (cfg *YiLogConfig) SetMaxSize(maxSize int) *YiLogConfig {
 // @author Tianyi
 // @description 设置最大备份数量
 func (cfg *YiLogConfig) SetMaxBackups(maxBackups int) *YiLogConfig {
-	cfg.maxBackups = maxBackups
+	cfg.MaxBackups = maxBackups
 	return cfg
 }
 
@@ -176,7 +176,7 @@ func (cfg *YiLogConfig) SetMaxBackups(maxBackups int) *YiLogConfig {
 // @author Tianyi
 // @description 设置最大保存天数
 func (cfg *YiLogConfig) SetMaxAge(maxAge int) *YiLogConfig {
-	cfg.maxAge = maxAge
+	cfg.MaxAge = maxAge
 	return cfg
 }
 
@@ -184,7 +184,7 @@ func (cfg *YiLogConfig) SetMaxAge(maxAge int) *YiLogConfig {
 // @author Tianyi
 // @description 设置保存日志文件
 func (cfg *YiLogConfig) SetFile(file string) *YiLogConfig {
-	cfg.file = file
+	cfg.File = file
 	return cfg
 }
 
@@ -192,7 +192,7 @@ func (cfg *YiLogConfig) SetFile(file string) *YiLogConfig {
 // @author Tianyi
 // @description 设置输出方式
 func (cfg *YiLogConfig) SetOutput(outputWay OutPutWay) *YiLogConfig {
-	cfg.outputWay = outputWay
+	cfg.OutputWay = outputWay
 	return cfg
 }
 
@@ -208,7 +208,7 @@ func (cfg *YiLogConfig) Build() *yiLogger {
 // @description 构建每行日志记录
 func buildLogEntry(cfg *YiLogConfig, level Level, msg string) *yiLogEntry {
 
-	parser := fmt.Sprintf("%v %v", cfg.dateFormat, cfg.timeFormat)
+	parser := fmt.Sprintf("%v %v", cfg.DateFormat, cfg.TimeFormat)
 	dateTime := time.Now().Format(parser)
 	// 定位调用目标
 	trace, line := getTraceAndLine()
@@ -227,38 +227,38 @@ func buildLogEntry(cfg *YiLogConfig, level Level, msg string) *yiLogEntry {
 // @description 构建 Logger 对象
 func buildLogger(cfg *YiLogConfig) *yiLogger {
 	// 配置默认值
-	if cfg.maxSize == 0 {
-		cfg.maxSize = 10
+	if cfg.MaxSize == 0 {
+		cfg.MaxSize = 10
 	}
 
-	if cfg.maxBackups == 0 {
-		cfg.maxBackups = 5
+	if cfg.MaxBackups == 0 {
+		cfg.MaxBackups = 5
 	}
 
-	if cfg.maxAge == 0 {
-		cfg.maxAge = 7
+	if cfg.MaxAge == 0 {
+		cfg.MaxAge = 7
 	}
 
-	if len(cfg.dateFormat) == 0 {
-		cfg.dateFormat = "yyyy/MM/dd"
+	if len(cfg.DateFormat) == 0 {
+		cfg.DateFormat = "yyyy/MM/dd"
 	}
 
-	if len(cfg.timeFormat) == 0 {
-		cfg.timeFormat = "hh:HH:ss"
+	if len(cfg.TimeFormat) == 0 {
+		cfg.TimeFormat = "hh:HH:ss"
 	}
 
-	if cfg.outputWay == OutPut.File && len(cfg.file) == 0 {
-		cfg.file = "./"
+	if cfg.OutputWay == OutPut.File && len(cfg.File) == 0 {
+		cfg.File = "./"
 	}
 
-	if cfg.outputWay == OutPut.Default {
+	if cfg.OutputWay == OutPut.Default || cfg.OutputWay == OutPut.Console {
 		return &yiLogger{
 			fo:   nil,
 			date: time.Now(),
 			cfg:  cfg,
 		}
 	} else {
-		fo := file_op.CreateFileOp(cfg.file, cfg.maxSize, cfg.compress)
+		fo := file_op.CreateFileOp(cfg.File, cfg.MaxSize, cfg.Compress)
 		return &yiLogger{
 			fo:   fo,
 			date: time.Now(),
@@ -268,7 +268,7 @@ func buildLogger(cfg *YiLogConfig) *yiLogger {
 }
 
 func (logger *yiLogger) Trace(format string, a ...any) {
-	if LogLevel.TraceLevel <= logger.cfg.logLevel {
+	if LogLevel.TraceLevel <= logger.cfg.LogLevel {
 		return
 	}
 
@@ -278,7 +278,7 @@ func (logger *yiLogger) Trace(format string, a ...any) {
 }
 
 func (logger *yiLogger) Debug(format string, a ...any) {
-	if LogLevel.DebugLevel <= logger.cfg.logLevel {
+	if LogLevel.DebugLevel <= logger.cfg.LogLevel {
 		return
 	}
 
@@ -289,7 +289,7 @@ func (logger *yiLogger) Debug(format string, a ...any) {
 
 func (logger *yiLogger) Info(format string, a ...any) {
 	// 如果 Log 配置的等级大于当前等级，则输入当前等级日志
-	if LogLevel.InfoLevel <= logger.cfg.logLevel {
+	if LogLevel.InfoLevel <= logger.cfg.LogLevel {
 		return
 	}
 
@@ -299,7 +299,7 @@ func (logger *yiLogger) Info(format string, a ...any) {
 }
 
 func (logger *yiLogger) Warn(format string, a ...any) {
-	if LogLevel.WarnLevel <= logger.cfg.logLevel {
+	if LogLevel.WarnLevel <= logger.cfg.LogLevel {
 		return
 	}
 
@@ -309,7 +309,7 @@ func (logger *yiLogger) Warn(format string, a ...any) {
 }
 
 func (logger *yiLogger) Error(format string, a ...any) {
-	if LogLevel.ErrorLevel <= logger.cfg.logLevel {
+	if LogLevel.ErrorLevel <= logger.cfg.LogLevel {
 		return
 	}
 
@@ -322,7 +322,7 @@ func (logger *yiLogger) Error(format string, a ...any) {
 // @author Tianyi
 // @description 该日志级别会直接让整个程序退出，慎用
 func (logger *yiLogger) Panic(format string, a ...any) {
-	if LogLevel.PanicLevel <= logger.cfg.logLevel {
+	if LogLevel.PanicLevel <= logger.cfg.LogLevel {
 		return
 	}
 
@@ -373,7 +373,7 @@ func formatMsg(format string, a ...any) string {
 // @author Tianyi
 // @description 根据配置输出到文件或者控制台
 func (logger *yiLogger) output(log []byte) {
-	if logger.cfg.outputWay == OutPut.Default || logger.cfg.outputWay == OutPut.Console {
+	if logger.cfg.OutputWay == OutPut.Default || logger.cfg.OutputWay == OutPut.Console {
 		fmt.Println(string(log))
 	} else {
 		_ = logger.fo.Write(log)

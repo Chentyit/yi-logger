@@ -11,33 +11,33 @@ func TestConfigBuildLink(t *testing.T) {
 
 	logger := BuildLoggerLink().SetDateFormat(LogDateFormat.ShortLine).SetTimeFormat(LogTimeFormat.Default).Build()
 
-	df := logger.cfg.dateFormat
+	df := logger.cfg.DateFormat
 	fmt.Println(df)
 	fmt.Println(logger.cfg)
-	ass.EqualValues(df, "yyyy-MM-dd", "日期格式错误")
+	ass.EqualValues(df, "2006-01-02", "日期格式错误")
 }
 
 func TestConfigBuild(t *testing.T) {
 	ass := assert.New(t)
 
 	cfg := &YiLogConfig{
-		dateFormat: LogDateFormat.ShortLine,
-		timeFormat: LogTimeFormat.Default,
+		DateFormat: LogDateFormat.ShortLine,
+		TimeFormat: LogTimeFormat.Default,
 	}
 
 	logger := BuildLogger(cfg)
 
-	df := logger.cfg.dateFormat
+	df := logger.cfg.DateFormat
 	fmt.Println(df)
 	fmt.Println(logger.cfg)
-	ass.EqualValues(df, "yyyy-MM-dd", "日期格式错误")
+	ass.EqualValues(df, "2006-01-02", "日期格式错误")
 }
 
 func TestBuildLogEntry(t *testing.T) {
 
 	cfg := &YiLogConfig{
-		dateFormat: LogDateFormat.Compact,
-		timeFormat: LogTimeFormat.Compact,
+		DateFormat: LogDateFormat.Compact,
+		TimeFormat: LogTimeFormat.Compact,
 	}
 
 	entry := buildLogEntry(cfg, LogLevel.InfoLevel, "test")
@@ -47,8 +47,8 @@ func TestBuildLogEntry(t *testing.T) {
 
 func TestInfo2Console(t *testing.T) {
 	cfg := &YiLogConfig{
-		dateFormat: LogDateFormat.Default,
-		timeFormat: LogTimeFormat.Default,
+		DateFormat: LogDateFormat.Default,
+		TimeFormat: LogTimeFormat.Default,
 	}
 
 	logger := BuildLogger(cfg)
@@ -57,12 +57,12 @@ func TestInfo2Console(t *testing.T) {
 
 func TestWriteBigLog(t *testing.T) {
 	cfg := &YiLogConfig{
-		compress:   true,
-		outputWay:  OutPut.File,
-		file:       "../test.log",
-		maxSize:    20,
-		dateFormat: LogDateFormat.Compact,
-		timeFormat: LogTimeFormat.Compact,
+		Compress:   true,
+		OutputWay:  OutPut.File,
+		File:       "../test.log",
+		MaxSize:    20,
+		DateFormat: LogDateFormat.Compact,
+		TimeFormat: LogTimeFormat.Compact,
 	}
 	logger := BuildLogger(cfg)
 	for true {
