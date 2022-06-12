@@ -1,41 +1,33 @@
 package file_op
 
 import (
-	"archive/zip"
-	"errors"
-	"io"
-	"io/fs"
+	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
 type FileOp struct {
-	file       *os.File
-	isOpen     bool // 用于判断是否可以进行操作
-	maxSize    int  // 以 MB 为单位
-	curSize    int
-	maxAge     int // 以天为单位
-	maxBackups int
-	curDate    time.Time
-	path       string
+	file         *os.File
+	isOpen       bool // 用于判断是否可以进行操作
+	needCompress bool // 是否需要压缩
+	maxSize      int  // 以 MB 为单位
+	curDate      time.Time
+	path         string
 }
 
-func CreateFileOp(path string, maxSize int, maxAge int, maxBackups int) *FileOp {
+func CreateFileOp(path string, maxSize int, needCompress bool) *FileOp {
 	return &FileOp{
-		path:       path,
-		isOpen:     false,
-		curSize:    0,
-		maxSize:    maxSize,
-		maxAge:     maxAge,
-		maxBackups: maxBackups,
+		path:         path,
+		needCompress: needCompress,
+		isOpen:       false,
+		maxSize:      maxSize,
 	}
 }
 
 // ready
-// @author Tianyi
 // @description 用于进行文件操作前的准备工作
 func (fo *FileOp) ready() (err error) {
 	if fo.file == nil {
@@ -57,7 +49,7 @@ func (fo *FileOp) ready() (err error) {
 }
 
 // Write
-// @author Tianyi
+// @param buf 需要写入的字节
 // @description 这里不做并发控制，由 Logger 传递过来的日志数据是通过 channel 发送过来的，
 //				，并不会出现多个协程往同一个文件里面写数据，文件操作模块主要集中于对日志文
 //				件的分片管理，对历史日志打包
@@ -66,8 +58,57 @@ func (fo *FileOp) Write(buf []byte) error {
 		_ = fo.ready()
 	}
 
+	var wg sync.WaitGroup
+
+	// 判断当前文件是否超出 maxSize
+	// 如果超出了最大限制，则需要进行以下操作:
+	// - 断开 fo.file 指针
+	// - 创建新文件，并将 fo.file 指向新的文件
+	// - 将原来的文件压缩打包
+	if fo.overMaxSize() {
+		_ = fo.Close()
+
+		now := time.Now()
+
+		date, month, day := now.Date()
+		timestamp := now.Unix()
+
+		// 获取原文件路径
+		filePreDir := filepath.Dir(fo.path)
+		// 获取原文件名称和扩展名
+		fileNameAndExt := strings.Split(filepath.Base(fo.path), ".")
+		fileName := fileNameAndExt[0]
+		fileExt := fileNameAndExt[1]
+		// 拼接新文件名（fileName-year-month-day-timestamp.fileExt)
+		changeFileName := fmt.Sprintf("%s-%v-%v-%v-%v.%s", fileName, date, int(month), day, timestamp, fileExt)
+		// 先改名再压缩是为了防止数据写入时因为压缩速度太慢而造成阻塞
+		changeFilePath, err := ChangeFileName(fo.path, changeFileName)
+		if err != nil {
+			return err
+		}
+		// 重新初始化 fo.file 继续写
+		_ = fo.ready()
+
+		// 判断用户是否设置压缩
+		if fo.needCompress {
+			// 使用同步锁保证压缩过程不会中断
+			wg.Add(1)
+			go func() {
+				wg.Done()
+				pkgName := fmt.Sprintf("%s-%v-%v-%v-%v.%s", fileName, date, int(month), day, timestamp, "zip")
+				pkgPath := filepath.Join(filePreDir, pkgName)
+				_ = Compress(pkgPath, changeFilePath)
+				// 删除原文件
+				_ = Remove(changeFilePath)
+			}()
+		}
+	}
+
 	buf = append(buf, '\n')
 	_, err := fo.file.Write(buf)
+
+	// 等待压缩完成
+	wg.Wait()
 	return err
 }
 
@@ -78,196 +119,14 @@ func (fo *FileOp) Close() error {
 	return err
 }
 
-// IsExists
-// @author Tianyi
-// @description 判断路径是否存在
-func IsExists(path string) bool {
-	_, err := os.Stat(path)
-	return !errors.Is(err, fs.ErrNotExist)
-}
+// overMaxSize
+// @description 判断该 FileOp 指向的文件是否超过最大值
+func (fo *FileOp) overMaxSize() bool {
+	info, _ := fo.file.Stat()
 
-// IsPermission
-// @author Tianyi
-// description 判断文件是否有权限操作
-func IsPermission(path string) bool {
-	_, err := os.Stat(path)
-	return !errors.Is(err, fs.ErrPermission)
-}
-
-// Mkdir
-// @author Tianyi
-// @description 创建一个目录
-func Mkdir(path string) error {
-	err := os.MkdirAll(path, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// CreateFile
-// @author Tianyi
-// @description 创建文件，先检查文件是否存在，存在就报错，不存在就创建
-func CreateFile(path string) (*os.File, error) {
-	exist := IsExists(path)
-	if exist {
-		return nil, errors.New("file already exists")
+	if info.Size() > int64(fo.maxSize*1024*1024) {
+		return true
 	}
 
-	file, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-	if err != nil {
-		return nil, err
-	}
-
-	return file, nil
-}
-
-// MustOpenFile
-// @author Tianyi
-// @description 直接打开文件，使用该方法的前提是确定文件一定存在
-func MustOpenFile(path string) (*os.File, error) {
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_RDWR, 0666)
-	return file, err
-}
-
-// Compress
-// @author Tianyi
-// @param filePath 需要压缩文件或者目录的路径
-// @param dest 压缩目标文件
-// @description 将文件压缩，触发压缩有以下几种情况：
-// 				1. 手动触发，会将当前 fo.file 打包
-// 				2. 没跨天，但是超过了 maxSize 会打包
-//				3. 跨天打包
-func Compress(pkgPath string, paths ...string) error {
-	// 获取上级目录路径
-	preDir := filepath.Dir(pkgPath)
-	if err := os.MkdirAll(preDir, os.ModePerm); err != nil {
-		return err
-	}
-
-	// 创建压缩文件
-	archive, err := os.Create(pkgPath)
-	if err != nil {
-		return err
-	}
-	defer func(archive *os.File) {
-		_ = archive.Close()
-	}(archive)
-
-	// 创建 zip writer
-	zipWriter := zip.NewWriter(archive)
-	defer func(zipWriter *zip.Writer) {
-		_ = zipWriter.Close()
-	}(zipWriter)
-
-	// 遍历需要打包的路径
-	for _, srcPath := range paths {
-		// 删除最后一个 '/'
-		srcPath = strings.TrimSuffix(srcPath, string(os.PathSeparator))
-
-		// 开始检查文件树
-		err = filepath.Walk(
-			srcPath,
-			func(path string, info fs.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-
-				header, err := zip.FileInfoHeader(info)
-				if err != nil {
-					return err
-				}
-
-				// 设置压缩方式
-				header.Method = zip.Deflate
-
-				// 将文件的相对路径设置为头名称
-				header.Name, err = filepath.Rel(filepath.Dir(srcPath), path)
-				if err != nil {
-					return err
-				}
-				if info.IsDir() {
-					header.Name += string(os.PathSeparator)
-				}
-
-				// 创建文件头写入器并保存文件内容
-				headerWriter, err := zipWriter.CreateHeader(header)
-				if err != nil {
-					return err
-				}
-				if info.IsDir() {
-					return nil
-				}
-				f, err := os.Open(path)
-				if err != nil {
-					return err
-				}
-				defer func(f *os.File) {
-					_ = f.Close()
-				}(f)
-				_, err = io.Copy(headerWriter, f)
-				return err
-			})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Decompress
-// @author Tianyi
-// @param srcPath 压缩包路径
-// @param dstPath 解压路径
-// @description
-func Decompress(srcPath, dstPath string) error {
-	reader, err := zip.OpenReader(srcPath)
-	if err != nil {
-		return err
-	}
-	defer func(reader *zip.ReadCloser) {
-		_ = reader.Close()
-	}(reader)
-	for _, file := range reader.File {
-		if err := decompress(file, dstPath); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func decompress(file *zip.File, dstPath string) error {
-	// create the directory of file
-	filePath := path.Join(dstPath, file.Name)
-	if file.FileInfo().IsDir() {
-		if err := os.MkdirAll(filePath, os.ModePerm); err != nil {
-			return err
-		}
-		return nil
-	}
-	if err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm); err != nil {
-		return err
-	}
-
-	// open the file
-	r, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer func(r io.ReadCloser) {
-		_ = r.Close()
-	}(r)
-
-	// create the file
-	w, err := os.Create(filePath)
-	if err != nil {
-		return err
-	}
-	defer func(w *os.File) {
-		_ = w.Close()
-	}(w)
-
-	// save the decompressed file content
-	_, err = io.Copy(w, r)
-	return err
+	return false
 }
