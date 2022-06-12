@@ -71,3 +71,15 @@ func (fo *FileOp) Close() error {
 	fo.file = nil
 	return err
 }
+
+// overMaxSize
+// @description 判断该 FileOp 指向的文件是否超过最大值
+func (fo *FileOp) overMaxSize() bool {
+	info, _ := fo.file.Stat()
+
+	if info.Size() > int64(fo.maxSize*1024*1024) {
+		return true
+	}
+
+	return false
+}
