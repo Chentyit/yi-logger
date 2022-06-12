@@ -1,4 +1,4 @@
-module yi-go-logger
+module github.com/Chentyit/yi-logger
 
 go 1.18
 
