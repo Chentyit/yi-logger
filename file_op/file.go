@@ -30,7 +30,6 @@ func CreateFileOp(path string, maxSize int, maxAge int, maxBackups int, needComp
 }
 
 // ready
-// @author Tianyi
 // @description 用于进行文件操作前的准备工作
 func (fo *FileOp) ready() (err error) {
 	if fo.file == nil {
@@ -52,7 +51,7 @@ func (fo *FileOp) ready() (err error) {
 }
 
 // Write
-// @author Tianyi
+// @param buf 需要写入的字节
 // @description 这里不做并发控制，由 Logger 传递过来的日志数据是通过 channel 发送过来的，
 //				，并不会出现多个协程往同一个文件里面写数据，文件操作模块主要集中于对日志文
 //				件的分片管理，对历史日志打包
