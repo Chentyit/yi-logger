@@ -21,7 +21,7 @@ func TestBuildLoggerConfig(t *testing.T) {
         MaxSize:    20, // 日志文件大小上限
         DateFormat: logger.LogDateFormat.Default, // 日志中的日期格式 "2006-01-02"
         TimeFormat: logger.LogTimeFormat.Default, // 日志中的时间格式 "15:04:05"
-	}
+    }
     logger := logger.BuildLogger(cfg)
   
     logger.Info("info message")
