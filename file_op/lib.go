@@ -51,6 +51,21 @@ func CreateFile(path string) (*os.File, error) {
 	return file, nil
 }
 
+// Remove
+// @description 删除文件
+func Remove(path string) error {
+	return os.RemoveAll(path)
+}
+
+// ChangeFileName
+// description 修改文件名
+func ChangeFileName(path string, dstName string) (string, error) {
+	preDir := filepath.Dir(path)
+	newFilePath := filepath.Join(preDir, dstName)
+	err := os.Rename(path, newFilePath)
+	return newFilePath, err
+}
+
 // MustOpenFile
 // @description 直接打开文件，使用该方法的前提是确定文件一定存在
 func MustOpenFile(path string) (*os.File, error) {
