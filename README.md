@@ -9,6 +9,10 @@
 ### 方法一
 
 ~~~golang
+import (
+    "github.com/Chentyit/yi-logger/logger"
+)
+
 func TestBuildLoggerConfig(t *testing.T) {
     cfg := &YiLogConfig{
         Compress:   true, // 是否压缩
@@ -17,8 +21,9 @@ func TestBuildLoggerConfig(t *testing.T) {
         MaxSize:    20, // 日志文件大小上限
         DateFormat: LogDateFormat.Default, // 日志中的日期格式 "2006-01-02"
         TimeFormat: LogTimeFormat.Default, // 日志中的时间格式 "15:04:05"
+
     }
-    logger := BuildLogger(cfg)
+    logger := logger.BuildLogger(cfg)
   
     logger.Info("info message")
     logger.Info("info: %s", "this is a info message")
@@ -34,15 +39,15 @@ func TestBuildLoggerConfig(t *testing.T) {
 
 ~~~golang
 func TestBuildLoggerLink(t *testing.T) {
-    logger := BuildLoggerLink()
-                .SetCompress(true)
-                .SetOutput(OutPut.File)
-                .SetFile("../test.log")
-                .SetMaxSize(20)
-                .SetDateFormat(LogDateFormat.Default)
-                .SetTimeFormat(LogTimeFormat.Default)
-                .Build()
-  
+    logger := logger.BuildLoggerLink()
+	            .SetCompress(true)
+	            .SetOutput(logger.OutPut.File)
+	            .SetFile("./test.log")
+	            .SetMaxSize(20)
+	            .SetDateFormat(logger.LogDateFormat.Default)
+	            .SetTimeFormat(logger.LogTimeFormat.Default)
+	            .Build()
+
     logger.Info("info message")
     logger.Info("info: %s", "this is a info message")
 	
