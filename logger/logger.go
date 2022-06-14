@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"github.com/Chentyit/yi-logger/file_op"
 	"os"
-	"runtime"
-	"strings"
 	"sync"
 	"time"
 )
@@ -104,10 +102,13 @@ type yiLogEntry struct {
 // @author Tianyi
 // @description 通过 yiLogger 进行操作（写，读，创建文件等）
 type yiLogger struct {
-	mu   *sync.Mutex     // 同步锁
-	fo   *file_op.FileOp // 文件 IO
-	date time.Time       // 日期，用于判断是否需要换文件
-	cfg  *YiLogConfig    // logger config
+	statue   bool            // logger 状态，false 关闭，true 打开
+	mu       *sync.Mutex     // 同步锁
+	fo       *file_op.FileOp // 文件 IO
+	date     time.Time       // 日期，用于判断是否需要换文件
+	cfg      *YiLogConfig    // logger config
+	exitChan chan struct{}   // 用于关闭 Logger
+	logCh    chan []byte
 }
 
 // BuildLogger
@@ -251,20 +252,36 @@ func buildLogger(cfg *YiLogConfig) *yiLogger {
 		cfg.File = "./"
 	}
 
+	var logger *yiLogger
+
 	if cfg.OutputWay == OutPut.Default || cfg.OutputWay == OutPut.Console {
-		return &yiLogger{
+		logger = &yiLogger{
 			fo:   nil,
 			date: time.Now(),
 			cfg:  cfg,
 		}
 	} else {
 		fo := file_op.CreateFileOp(cfg.File, cfg.MaxSize, cfg.Compress)
-		return &yiLogger{
+		logger = &yiLogger{
 			fo:   fo,
 			date: time.Now(),
 			cfg:  cfg,
 		}
+		// 初始化 Channel
+		logger.logCh = make(chan []byte, 255)
+		logger.exitChan = make(chan struct{})
+		// 开启通道接收日志
+		go logger.writer()
 	}
+
+	logger.statue = true
+
+	return logger
+}
+
+func (logger *yiLogger) Close() {
+	logger.statue = false
+	close(logger.exitChan)
 }
 
 func (logger *yiLogger) Trace(format string, a ...any) {
@@ -272,7 +289,7 @@ func (logger *yiLogger) Trace(format string, a ...any) {
 		return
 	}
 
-	log := createLog(logger.cfg, LogLevel.TraceLevel, format, a...)
+	log := logger.makeLog(LogLevel.TraceLevel, format, a...)
 
 	logger.output(log)
 }
@@ -282,7 +299,7 @@ func (logger *yiLogger) Debug(format string, a ...any) {
 		return
 	}
 
-	log := createLog(logger.cfg, LogLevel.DebugLevel, format, a...)
+	log := logger.makeLog(LogLevel.DebugLevel, format, a...)
 
 	logger.output(log)
 }
@@ -293,7 +310,7 @@ func (logger *yiLogger) Info(format string, a ...any) {
 		return
 	}
 
-	log := createLog(logger.cfg, LogLevel.InfoLevel, format, a...)
+	log := logger.makeLog(LogLevel.InfoLevel, format, a...)
 
 	logger.output(log)
 }
@@ -303,7 +320,7 @@ func (logger *yiLogger) Warn(format string, a ...any) {
 		return
 	}
 
-	log := createLog(logger.cfg, LogLevel.WarnLevel, format, a...)
+	log := logger.makeLog(LogLevel.WarnLevel, format, a...)
 
 	logger.output(log)
 }
@@ -313,7 +330,7 @@ func (logger *yiLogger) Error(format string, a ...any) {
 		return
 	}
 
-	log := createLog(logger.cfg, LogLevel.ErrorLevel, format, a...)
+	log := logger.makeLog(LogLevel.ErrorLevel, format, a...)
 
 	logger.output(log)
 }
@@ -326,56 +343,51 @@ func (logger *yiLogger) Panic(format string, a ...any) {
 		return
 	}
 
-	log := createLog(logger.cfg, LogLevel.PanicLevel, format, a...)
+	log := logger.makeLog(LogLevel.PanicLevel, format, a...)
 
 	logger.output(log)
 
 	os.Exit(1)
 }
 
-// createLog
+// makeLog
 // @author Tianyi
 // @description 生成日志内容
-func createLog(cfg *YiLogConfig, logLevel Level, format string, a ...any) []byte {
+func (logger *yiLogger) makeLog(logLevel Level, format string, a ...any) []byte {
 	// 格式化 msg
 	msg := formatMsg(format, a...)
 	// 构建日志每行信息
-	entry := buildLogEntry(cfg, logLevel, msg)
+	entry := buildLogEntry(logger.cfg, logLevel, msg)
 	log, _ := json.Marshal(entry)
 	return log
-}
-
-// getTraceAndLine
-// @author Tianyi
-// @description 获取调用栈信息
-func getTraceAndLine() (string, int) {
-	_, trace, line, ok := runtime.Caller(4)
-	if !ok {
-		trace = "???"
-		line = 0
-	}
-	return trace, line
-}
-
-// formatMsg
-// @author Tianyi
-// @description 格式化日志信息，因为该日志框架使用的是 Json 保存，保证每行日志都是
-//				一个 Json 字符串，如果存在 '\n' 和 '\r'，就会导致 Json 字符串换
-//				行，无法统一数据格式，以后也不方便扩展日志框架功能
-func formatMsg(format string, a ...any) string {
-	msg := fmt.Sprintf(format, a...)
-	msg = strings.Replace(msg, "\n", " ", -1)
-	msg = strings.Replace(msg, "\r", " ", -1)
-	return msg
 }
 
 // output
 // @author Tianyi
 // @description 根据配置输出到文件或者控制台
 func (logger *yiLogger) output(log []byte) {
+	if !logger.statue {
+		return
+	}
 	if logger.cfg.OutputWay == OutPut.Default || logger.cfg.OutputWay == OutPut.Console {
 		fmt.Println(string(log))
 	} else {
-		_ = logger.fo.Write(log)
+		logger.logCh <- log
+	}
+}
+
+func (logger *yiLogger) writer() {
+	var buf []byte
+	for {
+		select {
+		case buf = <-logger.logCh:
+			_ = logger.fo.Write(buf)
+		case <-logger.exitChan:
+			// 关闭日志通道
+			close(logger.logCh)
+			// 关闭文件操作
+			_ = logger.fo.Close()
+			return
+		}
 	}
 }
