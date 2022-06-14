@@ -99,10 +99,10 @@ import (
 
 func TestBuildLoggerConfig(t *testing.T) {
     cfg := &logger.YiLogConfig{
-        Compress:   true, 												// 是否压缩
-        OutputWay:  logger.OutPut.File, 					// 输出方式
-        File:       "../test.log", 								// 日志保存位置
-        MaxSize:    20, 													// 日志文件大小上限
+        Compress:   true,                         // 是否压缩
+        OutputWay:  logger.OutPut.File, 		  // 输出方式
+        File:       "../test.log",                // 日志保存位置
+        MaxSize:    20,                           // 日志文件大小上限
         DateFormat: logger.LogDateFormat.Default, // 日志中的日期格式 "2006-01-02"
         TimeFormat: logger.LogTimeFormat.Default, // 日志中的时间格式 "15:04:05"
     }
