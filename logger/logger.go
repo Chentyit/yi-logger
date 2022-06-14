@@ -285,7 +285,7 @@ func (logger *yiLogger) Close() {
 }
 
 func (logger *yiLogger) Trace(format string, a ...any) {
-	if LogLevel.TraceLevel <= logger.cfg.LogLevel {
+	if LogLevel.TraceLevel < logger.cfg.LogLevel {
 		return
 	}
 
@@ -295,7 +295,7 @@ func (logger *yiLogger) Trace(format string, a ...any) {
 }
 
 func (logger *yiLogger) Debug(format string, a ...any) {
-	if LogLevel.DebugLevel <= logger.cfg.LogLevel {
+	if LogLevel.DebugLevel < logger.cfg.LogLevel {
 		return
 	}
 
@@ -306,7 +306,7 @@ func (logger *yiLogger) Debug(format string, a ...any) {
 
 func (logger *yiLogger) Info(format string, a ...any) {
 	// 如果 Log 配置的等级大于当前等级，则输入当前等级日志
-	if LogLevel.InfoLevel <= logger.cfg.LogLevel {
+	if LogLevel.InfoLevel < logger.cfg.LogLevel {
 		return
 	}
 
@@ -316,7 +316,7 @@ func (logger *yiLogger) Info(format string, a ...any) {
 }
 
 func (logger *yiLogger) Warn(format string, a ...any) {
-	if LogLevel.WarnLevel <= logger.cfg.LogLevel {
+	if LogLevel.WarnLevel < logger.cfg.LogLevel {
 		return
 	}
 
@@ -326,7 +326,7 @@ func (logger *yiLogger) Warn(format string, a ...any) {
 }
 
 func (logger *yiLogger) Error(format string, a ...any) {
-	if LogLevel.ErrorLevel <= logger.cfg.LogLevel {
+	if LogLevel.ErrorLevel < logger.cfg.LogLevel {
 		return
 	}
 
@@ -339,7 +339,7 @@ func (logger *yiLogger) Error(format string, a ...any) {
 // @author Tianyi
 // @description 该日志级别会直接让整个程序退出，慎用
 func (logger *yiLogger) Panic(format string, a ...any) {
-	if LogLevel.PanicLevel <= logger.cfg.LogLevel {
+	if LogLevel.PanicLevel < logger.cfg.LogLevel {
 		return
 	}
 
