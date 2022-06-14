@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Chentyit/yi-logger/file_op"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -268,7 +269,7 @@ func buildLogger(cfg *YiLogConfig) *yiLogger {
 			cfg:  cfg,
 		}
 		// 初始化 Channel
-		logger.logCh = make(chan []byte, 255)
+		logger.logCh = make(chan []byte, runtime.NumCPU())
 		logger.exitChan = make(chan struct{})
 		// 开启通道接收日志
 		go logger.writer()
