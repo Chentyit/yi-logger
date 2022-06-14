@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestConfigBuildLink(t *testing.T) {
@@ -60,16 +61,20 @@ func TestWriteBigLog(t *testing.T) {
 		Compress:   true,
 		OutputWay:  OutPut.File,
 		File:       "../test.log",
-		MaxSize:    20,
+		MaxSize:    50,
 		DateFormat: LogDateFormat.Compact,
 		TimeFormat: LogTimeFormat.Compact,
 	}
 	logger := BuildLogger(cfg)
-	for true {
-		logger.Info("info message")
-		logger.Trace("trace message")
-		logger.Error("error message")
-		logger.Debug("debug message")
-		logger.Warn("warn message")
-	}
+	go func() {
+		for true {
+			logger.Info("info message")
+			logger.Trace("trace message")
+			logger.Error("error message")
+			logger.Debug("debug message")
+			logger.Warn("warn message")
+		}
+	}()
+	time.Sleep(time.Second * 20)
+	logger.Close()
 }
