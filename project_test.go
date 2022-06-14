@@ -9,7 +9,7 @@ func BenchmarkLogger(b *testing.B) {
 	cfg := &logger.YiLogConfig{
 		Compress:   true,
 		OutputWay:  logger.OutPut.File,
-		File:       "../test.log",
+		File:       "./test.log",
 		MaxSize:    50,
 		DateFormat: logger.LogDateFormat.Compact,
 		TimeFormat: logger.LogTimeFormat.Compact,
