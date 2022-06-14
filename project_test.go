@@ -7,6 +7,7 @@ import (
 
 func BenchmarkLogger(b *testing.B) {
 	cfg := &logger.YiLogConfig{
+		LogLevel:   logger.LogLevel.InfoLevel,
 		Compress:   true,
 		OutputWay:  logger.OutPut.File,
 		File:       "./test.log",
